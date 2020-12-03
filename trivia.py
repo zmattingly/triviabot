@@ -276,9 +276,11 @@ class triviabot(irc.IRCClient):
         '''
         # set up command dicts.
         unpriviledged_commands = {'score': self._score,
+                                  'session_score': self._session_score,
                                   'help': self._help,
                                   'source': self._show_source,
                                   'standings': self._standings,
+                                  'session_standings': self._session_standings,
                                   'giveclue': self._give_clue,
                                   'next': self._next_vote,
                                   'skip': self._next_question
@@ -341,7 +343,7 @@ class triviabot(irc.IRCClient):
         '''
         Starts the trivia game.
 
-        TODO: Load ` from last game, if any.
+        TODO: Load scores from last game, if any.
         '''
         if self._lc.running:
             return
@@ -463,7 +465,7 @@ class triviabot(irc.IRCClient):
             self._cmsg(user, "Your current score for this session is: {}"
                        .format(str(self._session_scores[user])))
         except:
-            self._cmsg(user, "You don't hvae any points in this session yet.")
+            self._cmsg(user, "You don't have any points in this session yet.")
 
     def _next_question(self, args, user, channel):
         '''
