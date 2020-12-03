@@ -28,10 +28,19 @@ import os
 import sys
 from os import execl, listdir, path, makedirs
 from random import choice
+from datetime import datetime
+from pytz import timezone, utc
 from twisted.words.protocols import irc
 from twisted.internet import reactor
 from twisted.internet.protocol import ClientFactory
 from twisted.internet.task import LoopingCall
+
+def get_pst_time():
+    date_format='%m_%d_%Y_%H_%M_%S_%Z'
+    date = datetime.now(tz=utc)
+    date = date.astimezone(timezone('US/Pacific'))
+    pstDateTime=date.strftime(date_format)
+    return pstDateTime
 
 from lib.answer import Answer
 
@@ -52,7 +61,6 @@ try:
 except:
     config.COLOR_CODE = ''
 
-
 class triviabot(irc.IRCClient):
     '''
     This is the irc bot portion of the trivia bot.
@@ -66,6 +74,8 @@ class triviabot(irc.IRCClient):
         self._answer = Answer()
         self._question = ''
         self._scores = {}
+        self._session_scores = {}
+        self._session_start = get_pst_time()
         self._clue_number = 0
         self._admins = list(config.ADMINS)
         self._admins.append(config.OWNER)
@@ -206,6 +216,10 @@ class triviabot(irc.IRCClient):
             self._scores[user] += self._current_points
         except:
             self._scores[user] = self._current_points
+        try:
+            self._session_scores[user] += self._current_points
+        except:
+            self._session_scores[user] = self._current_points
         if self._current_points == 1:
             self._gmsg("{} point has been added to your score!"
                        .format(str(self._current_points)))
@@ -327,13 +341,21 @@ class triviabot(irc.IRCClient):
         '''
         Starts the trivia game.
 
-        TODO: Load scores from last game, if any.
+        TODO: Load ` from last game, if any.
         '''
         if self._lc.running:
             return
         else:
             self._lc.start(config.WAIT_INTERVAL)
+            self._restart_session()
             self.factory.running = True
+
+    def _restart_session(self):
+        '''
+        Reboots the current session info
+        '''
+        self._session_scores = {}
+        self._session_start = get_pst_time()
 
     def _stop(self, *args):
         '''
@@ -345,10 +367,15 @@ class triviabot(irc.IRCClient):
         else:
             self._lc.stop()
             self._gmsg('Thanks for playing trivia!')
+            self._gmsg('')
+            self._gmsg('Current session stats:')
+            self._session_standings(None, self._game_channel, None)
+            self._gmsg('')
             self._gmsg('Current rankings were:')
             self._standings(None, self._game_channel, None)
             self._gmsg('''Scores have been saved, and see you next game!''')
             self._save_game()
+            self._restart_session()
             self.factory.running = False
 
     def _save_game(self, *args):
@@ -428,6 +455,16 @@ class triviabot(irc.IRCClient):
         except:
             self._cmsg(user, "You aren't in my database.")
 
+    def _session_score(self, args, user, channel)
+        '''
+        Tells the user their session score.
+        '''
+        try:
+            self._cmsg(user, "Your current score for this session is: {}"
+                       .format(str(self._session_scores[user])))
+        except:
+            self._cmsg(user, "You don't hvae any points in this session yet.")
+
     def _next_question(self, args, user, channel):
         '''
         Administratively skips the current question.
@@ -448,6 +485,17 @@ class triviabot(irc.IRCClient):
         '''
         self._cmsg(user, "The current trivia standings are: ")
         sorted_scores = sorted(self._scores.iteritems(), key=lambda (k, v): (v, k), reverse=True)
+        for rank, (player, score) in enumerate(sorted_scores, start=1):
+            formatted_score = "{}: {}: {}".format(rank, player, score)
+            self._cmsg(user, formatted_score)
+
+    def _session_standings(self, args, user, channel):
+        '''
+        Tells the channel
+        '''
+        self._cmsg(user, "The current session started at {}".format(self._session_start))
+        self._cmsg(user, "The ranks for this session are as follows:")
+        sorted_scores = sorted(self._session_scores.iteritems(), key=lambda (k, v): (v, k), reverse=True)
         for rank, (player, score) in enumerate(sorted_scores, start=1):
             formatted_score = "{}: {}: {}".format(rank, player, score)
             self._cmsg(user, formatted_score)
