@@ -274,7 +274,7 @@ class triviabot(irc.IRCClient):
         Callback that responds to commands given to the bot.
 
         Need to differentiate between priviledged users and regular
-        users.å
+        users.
         '''
         # set up command dicts.
         unpriviledged_commands = {'score': self._score,
