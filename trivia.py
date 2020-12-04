@@ -495,7 +495,7 @@ class triviabot(irc.IRCClient):
 
     def _session_standings(self, args, user, channel):
         '''
-        Tells the channel
+        Tells the channel the current session ranks
         '''
         self._cmsg(user, "The current session started at {}".format(self._session_start))
         self._cmsg(user, "The ranks for this session are as follows:")
