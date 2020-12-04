@@ -249,12 +249,14 @@ class triviabot(irc.IRCClient):
             self._admins.index(user)
         except:
             self._cmsg(user, "I'm {}'s trivia bot.".format(config.OWNER))
-            self._cmsg(user, "Commands: score, standings, giveclue, help, "
-                       "next, source")
+            self._cmsg(user, "Commands: score, standings, "
+                             "session_score, session_standings "
+                             "giveclue, help, next, source")
             return
         self._cmsg(user, "I'm {}'s trivia bot.".format(config.OWNER))
-        self._cmsg(user, "Commands: score, standings, giveclue, help, next, "
-                   "skip, source")
+        self._cmsg(user, "Commands: score, standings, "
+                         "session_score, session_standings "
+                         "giveclue, help, next, skip, source")
         self._cmsg(user, "Admin commands: die, set <user> <score>, start, stop, "
                    "save")
 
@@ -272,7 +274,7 @@ class triviabot(irc.IRCClient):
         Callback that responds to commands given to the bot.
 
         Need to differentiate between priviledged users and regular
-        users.
+        users.å
         '''
         # set up command dicts.
         unpriviledged_commands = {'score': self._score,
